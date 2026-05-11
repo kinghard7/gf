@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 月相形状（左侧实心圆，右侧叠白圆切出弯月） -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+        android:width="108dp"
+        android:height="108dp"
+        android:viewportWidth="108"
+        android:viewportHeight="108">
+    <!-- 大圆：主色 -->
+    <path
+        android:fillColor="#C5634A"
+        android:pathData="M54,30
+                          A 24,24 0 1 1 54,78
+                          A 24,24 0 1 1 54,30 Z"/>
+    <!-- 偏右的背景色圆，遮住大圆右侧形成月牙 -->
+    <path
+        android:fillColor="#FAF7F2"
+        android:pathData="M64,28
+                          A 22,22 0 1 1 64,72
+                          A 22,22 0 1 1 64,28 Z"/>
+</vector>

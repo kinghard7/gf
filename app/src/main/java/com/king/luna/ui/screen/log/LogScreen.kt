@@ -1,0 +1,133 @@
+package com.king.luna.ui.screen.log
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.king.luna.data.repo.CycleRepository
+import com.king.luna.domain.model.Mood
+import com.king.luna.domain.model.Symptom
+import com.king.luna.ui.common.PrimaryButton
+import com.king.luna.ui.theme.LunaCardShape
+import com.king.luna.ui.theme.LunaColors
+import com.king.luna.ui.theme.lunaCard
+import com.king.luna.ui.theme.lunaHeaderStyle
+import com.king.luna.ui.theme.lunaMetaStyle
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+fun LogScreen(repo: CycleRepository, initialDate: LocalDate = LocalDate.now(), onSaved: () -> Unit = {}) {
+    val vm: LogViewModel = viewModel(factory = LogViewModel.Factory(repo, initialDate))
+    val ui by vm.state.collectAsState()
+    val keyboard = LocalSoftwareKeyboardController.current
+
+    // restoreState 时 ViewModel 不重建，主动同步日期
+    LaunchedEffect(initialDate) {
+        vm.pickDate(initialDate)
+    }
+
+    LaunchedEffect(ui.saved) {
+        if (ui.saved) {
+            keyboard?.hide()
+            vm.ackSaved()
+            onSaved()
+        }
+    }
+
+    val dateFmt = remember { DateTimeFormatter.ofPattern("M 月 d 日", Locale.CHINA) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Header: eyebrow + serif 日期
+        Text("DAILY LOG", style = lunaMetaStyle())
+        Text(ui.date.format(dateFmt), style = lunaHeaderStyle())
+
+        SectionCard(title = "流量") {
+            FlowSelector(selected = ui.flow, onSelect = vm::setFlow)
+        }
+
+        SectionCard(title = "心情") {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Mood.values().forEach { m ->
+                    ToggleChip(
+                        text = "${m.emoji} ${m.label}",
+                        selected = m in ui.moods,
+                        onClick = { vm.toggleMood(m) }
+                    )
+                }
+            }
+        }
+
+        SectionCard(title = "症状") {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Symptom.values().forEach { s ->
+                    ToggleChip(
+                        text = s.label,
+                        selected = s in ui.symptoms,
+                        onClick = { vm.toggleSymptom(s) }
+                    )
+                }
+            }
+        }
+
+        SectionCard(title = "笔记") {
+            OutlinedTextField(
+                value = ui.note,
+                onValueChange = vm::setNote,
+                modifier = Modifier.fillMaxWidth().height(120.dp),
+                placeholder = { Text("写点什么…") }
+            )
+        }
+
+        Spacer(Modifier.height(8.dp))
+        PrimaryButton(
+            text = if (ui.saving) "保存中…" else "保存",
+            onClick = vm::save,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !ui.saving
+        )
+    }
+}
+
+@Composable
+private fun SectionCard(title: String, content: @Composable () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .lunaCard()
+            .background(LunaColors.card, LunaCardShape)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(title, style = lunaMetaStyle())
+        content()
+    }
+}
