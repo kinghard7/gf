@@ -20,7 +20,7 @@ class CycleRepository(
     private val periodDayDao: PeriodDayDao,
     private val dayLogDao: DayLogDao,
     private val clock: () -> LocalDate = LocalDate::now
-) {
+) : com.king.luna.ui.screen.log.LogRepoPort {
 
     // 经期日列表（按日期升序）
     fun observePeriodDays(): Flow<List<LocalDate>> =
@@ -67,12 +67,12 @@ class CycleRepository(
             )
         }
 
-    suspend fun getPeriodDay(date: LocalDate): PeriodDayEntity? = periodDayDao.get(date)
+    override suspend fun getPeriodDay(date: LocalDate): PeriodDayEntity? = periodDayDao.get(date)
 
-    suspend fun getDayLog(date: LocalDate): DayLogEntity? = dayLogDao.get(date)
+    override suspend fun getDayLog(date: LocalDate): DayLogEntity? = dayLogDao.get(date)
 
     // 写入经期：NONE 视为删除该日记录
-    suspend fun setPeriod(date: LocalDate, flow: FlowLevel) {
+    override suspend fun setPeriod(date: LocalDate, flow: FlowLevel) {
         if (flow == FlowLevel.NONE) {
             periodDayDao.delete(date)
         } else {
@@ -81,7 +81,7 @@ class CycleRepository(
     }
 
     // 写入日志：全空（无 mood/symptom/note）则删除
-    suspend fun setLog(date: LocalDate, moods: Set<Mood>, symptoms: Set<Symptom>, note: String) {
+    override suspend fun setLog(date: LocalDate, moods: Set<Mood>, symptoms: Set<Symptom>, note: String) {
         val noteTrim = note.trim()
         if (moods.isEmpty() && symptoms.isEmpty() && noteTrim.isEmpty()) {
             dayLogDao.delete(date)
