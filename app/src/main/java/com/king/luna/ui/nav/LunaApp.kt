@@ -100,8 +100,7 @@ private fun LunaNavGraph(
             val dateStr = backStackEntry.arguments?.getString("date") ?: LocalDate.now().toString()
             LogScreen(
                 repo = container.cycleRepository,
-                initialDate = LocalDate.parse(dateStr),
-                onSaved = { switchTab(LunaRoutes.CALENDAR) }
+                initialDate = LocalDate.parse(dateStr)
             )
         }
         composable(LunaRoutes.INSIGHT) {

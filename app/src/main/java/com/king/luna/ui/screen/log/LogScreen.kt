@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,18 +14,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.king.luna.data.repo.CycleRepository
 import com.king.luna.domain.model.Mood
 import com.king.luna.domain.model.Symptom
-import com.king.luna.ui.common.PrimaryButton
 import com.king.luna.ui.theme.LunaCardShape
 import com.king.luna.ui.theme.LunaColors
 import com.king.luna.ui.theme.lunaCard
@@ -38,25 +39,22 @@ import java.util.Locale
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-fun LogScreen(repo: CycleRepository, initialDate: LocalDate = LocalDate.now(), onSaved: () -> Unit = {}) {
+fun LogScreen(repo: CycleRepository, initialDate: LocalDate = LocalDate.now()) {
     val vm: LogViewModel = viewModel(factory = LogViewModel.Factory(repo, initialDate))
     val ui by vm.state.collectAsState()
-    val keyboard = LocalSoftwareKeyboardController.current
 
-    // restoreState 时 ViewModel 不重建，主动同步日期
+    // restoreState 会复用 ViewModel，日期必须显式同步。
     LaunchedEffect(initialDate) {
         vm.pickDate(initialDate)
     }
 
-    LaunchedEffect(ui.saved) {
-        if (ui.saved) {
-            keyboard?.hide()
-            vm.ackSaved()
-            onSaved()
-        }
+    // 未失焦直接离开页面时，仍然要把笔记刷盘。
+    DisposableEffect(Unit) {
+        onDispose { vm.commitNoteIfChanged() }
     }
 
     val dateFmt = remember { DateTimeFormatter.ofPattern("M 月 d 日", Locale.CHINA) }
+    var noteWasFocused by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -66,7 +64,6 @@ fun LogScreen(repo: CycleRepository, initialDate: LocalDate = LocalDate.now(), o
             .padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Header: eyebrow + serif 日期
         Text("DAILY LOG", style = lunaMetaStyle())
         Text(ui.date.format(dateFmt), style = lunaHeaderStyle())
 
@@ -76,11 +73,11 @@ fun LogScreen(repo: CycleRepository, initialDate: LocalDate = LocalDate.now(), o
 
         SectionCard(title = "心情") {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Mood.values().forEach { m ->
+                Mood.values().forEach { mood ->
                     ToggleChip(
-                        text = "${m.emoji} ${m.label}",
-                        selected = m in ui.moods,
-                        onClick = { vm.toggleMood(m) }
+                        text = "${mood.emoji} ${mood.label}",
+                        selected = mood in ui.moods,
+                        onClick = { vm.toggleMood(mood) }
                     )
                 }
             }
@@ -88,11 +85,11 @@ fun LogScreen(repo: CycleRepository, initialDate: LocalDate = LocalDate.now(), o
 
         SectionCard(title = "症状") {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Symptom.values().forEach { s ->
+                Symptom.values().forEach { symptom ->
                     ToggleChip(
-                        text = s.label,
-                        selected = s in ui.symptoms,
-                        onClick = { vm.toggleSymptom(s) }
+                        text = symptom.label,
+                        selected = symptom in ui.symptoms,
+                        onClick = { vm.toggleSymptom(symptom) }
                     )
                 }
             }
@@ -102,18 +99,18 @@ fun LogScreen(repo: CycleRepository, initialDate: LocalDate = LocalDate.now(), o
             OutlinedTextField(
                 value = ui.note,
                 onValueChange = vm::setNote,
-                modifier = Modifier.fillMaxWidth().height(120.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp)
+                    .onFocusChanged { focusState ->
+                        if (noteWasFocused && !focusState.isFocused) {
+                            vm.commitNoteIfChanged()
+                        }
+                        noteWasFocused = focusState.isFocused
+                    },
                 placeholder = { Text("写点什么…") }
             )
         }
-
-        Spacer(Modifier.height(8.dp))
-        PrimaryButton(
-            text = if (ui.saving) "保存中…" else "保存",
-            onClick = vm::save,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !ui.saving
-        )
     }
 }
 
