@@ -7,6 +7,7 @@ object LunaRoutes {
     const val LOG = "log/{date}"      // 带日期参数
     const val INSIGHT = "insight"
     const val NOTIFICATIONS = "notifications"
+    const val PRIVACY_POLICY = "privacy_policy"
 
     // 不带日期跳转时用的路由（今天）
     fun logRoute(date: java.time.LocalDate) = "log/${date}"

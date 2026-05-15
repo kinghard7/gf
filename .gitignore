@@ -1,12 +1,46 @@
+# --- 构建与本机 ---
 *.iml
 .gradle/
-local.properties
 .idea/
+.kotlin/
 .DS_Store
 build/
 captures/
 .externalNativeBuild/
 .cxx/
+kotlin/
+
+# SDK 路径、本机环境（含 sdk.dir）
+local.properties
+
+# 产物
 *.apk
 *.aab
+
+# --- 签名与密钥（切勿提交 GitHub）---
 *.keystore
+*.jks
+*.p12
+signing/**/*.keystore
+signing/**/*.jks
+signing/**/keystore.properties
+# 显式列出，避免误以为子目录不受 *.keystore 匹配
+signing/release.keystore
+
+# 其他常见机密文件名（若用到请放被忽略路径或环境变量）
+secrets.properties
+**/secrets.properties
+*.pem
+.env
+.env.*
+**/credentials.json
+**/client_secret*.json
+play-service-account.json
+firebase-adminsdk*.json
+*-firestore-key.json
+
+# Google / Firebase：若 API Key 已做包名/签名限制且你希望随仓库公开，可删除下面两行。
+google-services.json
+GoogleService-Info.plist
+
+docs/oppo-store-materials.md

@@ -32,12 +32,11 @@ Luna 不是又一个把身体数据丢到云端的复杂健康平台。它只做
 Luna 的默认边界很简单：
 
 - 没有账号体系。
-- 没有网络权限。
-- Room 保存周期与日常记录。
-- DataStore 保存提醒偏好。
+- **周期与健康相关记录不上传至开发者服务器**；数据保存在本机（Room / DataStore）。
+- **不申请网络权限**：应用内《隐私政策》仅加载内置 HTML；商店上架时你仍需在后台填写**单独的 HTTPS 网页链接**（把同一份 HTML 部署到网站上即可），与用户用手机浏览器查看，**不等于 App 联网**。
 - 通知权限仅用于 Android 13+ 的本地提醒。
 
-这不是“隐私营销词”，这是代码层面的事实。
+这不是“隐私营销词”，核心数据流在代码层面保持本地。
 
 ## 技术栈
 
@@ -111,6 +110,8 @@ AAB：
 - `app/build/outputs/apk/release/app-release.apk`
 - `app/build/outputs/bundle/release/app-release.aab`
 
+**构建报错只有一行版本号（例如 `25.0.3`）？** 那是当前用来跑 Gradle 的 **JDK 版本过新**（如 JDK 25）；本工程要求 **JDK 17–21** 执行 `./gradlew`。请把 `JAVA_HOME` 指到 JDK 17（或 21），或在 `~/.gradle/gradle.properties` 里设置 `org.gradle.java.home` 指向该 JDK。根目录 `build.gradle.kts` 会在不匹配时给出更完整的中文说明。
+
 ## 工程信息
 
 | 项 | 值 |
@@ -131,4 +132,4 @@ AAB：
 
 ## 许可证
 
-当前仓库尚未补充 `LICENSE`。如需开源发布，请先明确许可证。
+本仓库源代码在 **[Apache License 2.0](LICENSE)**（「Apache 许可证，第 2.0 版」）下发布。全文见仓库根目录的 `LICENSE`；版权与归属声明见 `NOTICE`。再分发时请保留原有的许可与NOTICE中的归属说明。

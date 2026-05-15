@@ -27,6 +27,7 @@ import com.king.luna.ui.common.TabItem
 import com.king.luna.ui.screen.calendar.CalendarScreen
 import com.king.luna.ui.screen.insight.InsightScreen
 import com.king.luna.ui.screen.log.LogScreen
+import com.king.luna.ui.screen.legal.PrivacyPolicyScreen
 import com.king.luna.ui.screen.notification.NotificationScreen
 import com.king.luna.ui.screen.today.TodayScreen
 import java.time.LocalDate
@@ -37,6 +38,7 @@ fun LunaApp(container: AppContainer) {
     val backStack by nav.currentBackStackEntryAsState()
     val rawRoute = backStack?.destination?.route ?: LunaRoutes.TODAY
     val current = if (rawRoute.startsWith("log")) LunaRoutes.CALENDAR else rawRoute
+    val showBottomBar = rawRoute != LunaRoutes.PRIVACY_POLICY
 
     val tabs = listOf(
         TabItem(LunaRoutes.TODAY, "今日", Icons.Outlined.Favorite),
@@ -61,11 +63,13 @@ fun LunaApp(container: AppContainer) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            BottomTabBar(
-                tabs = tabs,
-                current = current,
-                onSelect = switchTab
-            )
+            if (showBottomBar) {
+                BottomTabBar(
+                    tabs = tabs,
+                    current = current,
+                    onSelect = switchTab
+                )
+            }
         }
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
@@ -107,7 +111,13 @@ private fun LunaNavGraph(
             InsightScreen(repo = container.cycleRepository)
         }
         composable(LunaRoutes.NOTIFICATIONS) {
-            NotificationScreen(settingsRepo = container.settingsRepository)
+            NotificationScreen(
+                settingsRepo = container.settingsRepository,
+                onOpenPrivacyPolicy = { nav.navigate(LunaRoutes.PRIVACY_POLICY) }
+            )
+        }
+        composable(LunaRoutes.PRIVACY_POLICY) {
+            PrivacyPolicyScreen(onBack = { nav.popBackStack() })
         }
     }
 }

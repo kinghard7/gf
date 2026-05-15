@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -54,7 +55,10 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
-fun NotificationScreen(settingsRepo: SettingsRepository) {
+fun NotificationScreen(
+    settingsRepo: SettingsRepository,
+    onOpenPrivacyPolicy: () -> Unit
+) {
     val settings by settingsRepo.flow.collectAsState(initial = ReminderSettings())
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -186,6 +190,20 @@ fun NotificationScreen(settingsRepo: SettingsRepository) {
                 · Android 13 及以上请在系统中允许 Luna 发送通知。
                 """.trimIndent(),
                 style = MaterialTheme.typography.bodySmall.copy(color = LunaInkMuted)
+            )
+        }
+
+        SettingsSectionCard(title = "隐私政策") {
+            Text(
+                "了解 Luna 如何收集、使用与保存信息（用于应用商店审核与用户知情）。",
+                style = MaterialTheme.typography.bodySmall.copy(color = LunaInkMuted)
+            )
+            Text(
+                "查看隐私政策",
+                style = MaterialTheme.typography.titleSmall.copy(color = LunaAccent),
+                modifier = Modifier
+                    .clickable { onOpenPrivacyPolicy() }
+                    .padding(top = 8.dp)
             )
         }
 
