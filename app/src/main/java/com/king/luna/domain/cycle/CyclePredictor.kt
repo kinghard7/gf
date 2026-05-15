@@ -44,7 +44,8 @@ object CyclePredictor {
 
         val cycleDay = (ChronoUnit.DAYS.between(cycleStart, today).toInt() + 1)
             .takeIf { it >= 1 }
-        val phase = derivePhase(today, todayIsPeriod, segments.last(), ovulation, fertile, nextStart)
+        val hasPeriodRecordToday = todayIsPeriod || today in sorted
+        val phase = derivePhase(today, hasPeriodRecordToday, segments.last(), ovulation, fertile, nextStart)
 
         return CyclePrediction(
             cycleStart = cycleStart,
